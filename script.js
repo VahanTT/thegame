@@ -17,6 +17,40 @@ const bestScoreElement = document.getElementById('bestScore');
 const finalScoreElement = document.getElementById('finalScore');
 const gameOverMessage = document.getElementById('gameOverMessage');
 
+// Debug function
+function debug(message) {
+    console.log(`[DEBUG] ${message}`);
+}
+
+// Check if all required elements exist
+function checkElements() {
+    const elements = {
+        target,
+        gameContainer,
+        startScreen,
+        gameOverScreen,
+        startButton,
+        restartButton,
+        saveResultButton,
+        clearCacheButton,
+        leaderboardBody,
+        timeLeftElement,
+        clicksCountElement,
+        bestScoreElement,
+        finalScoreElement,
+        gameOverMessage
+    };
+
+    let allElementsExist = true;
+    for (const [name, element] of Object.entries(elements)) {
+        if (!element) {
+            debug(`Element not found: ${name}`);
+            allElementsExist = false;
+        }
+    }
+    return allElementsExist;
+}
+
 // Game state
 let gameState = {
     isActive: false,
@@ -38,11 +72,6 @@ const images = [
     'images/telegram-peer-photo-size-2-422224306747058198-1-0-0.jpg',
     'images/telegram-cloud-photo-size-2-315165533860374848-c.jpg'
 ];
-
-// Debug function
-function debug(message) {
-    console.log(`[DEBUG] ${message}`);
-}
 
 // Функции для работы с таблицей результатов
 function getLeaderboard() {
@@ -117,11 +146,23 @@ function saveGameResult(score, reactionTimes) {
 
 // Preload images
 function preloadImages() {
+    debug('Preloading images...');
+    let loadedCount = 0;
+    const totalImages = images.length;
+
     images.forEach(src => {
         const img = new Image();
+        img.onload = () => {
+            loadedCount++;
+            debug(`Image loaded: ${src} (${loadedCount}/${totalImages})`);
+            if (loadedCount === totalImages) {
+                debug('All images loaded successfully');
+            }
+        };
+        img.onerror = () => {
+            debug(`Error loading image: ${src}`);
+        };
         img.src = src;
-        img.onload = () => debug(`Image loaded: ${src}`);
-        img.onerror = () => debug(`Error loading image: ${src}`);
     });
 }
 
@@ -129,6 +170,11 @@ function preloadImages() {
 function initGame() {
     debug('Initializing game...');
     
+    if (!checkElements()) {
+        debug('Game initialization failed: some elements are missing');
+        return;
+    }
+
     gameState = {
         isActive: false,
         clicksCount: 0,
@@ -140,9 +186,9 @@ function initGame() {
     };
 
     updateStats();
-    if (target) target.style.display = 'none';
-    if (startScreen) startScreen.classList.remove('hidden');
-    if (gameOverScreen) gameOverScreen.classList.add('hidden');
+    target.style.display = 'none';
+    startScreen.classList.remove('hidden');
+    gameOverScreen.classList.add('hidden');
 
     if (gameState.timer) {
         clearInterval(gameState.timer);
@@ -166,23 +212,21 @@ function startFromRules() {
 function startGame() {
     debug('Starting game...');
     
-    if (!target || !gameContainer) {
-        debug('Required elements not found');
-        return;
+    if (!gameState.isActive) {
+        gameState.isActive = true;
+        gameState.clicksCount = 0;
+        gameState.timeLeft = 15;
+        gameState.startTime = Date.now();
+        gameState.reactionTimes = [];
+        
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        
+        updateStats();
+        moveTarget();
+        startTimer();
+        debug('Game started successfully');
     }
-
-    gameState.isActive = true;
-    gameState.clicksCount = 0;
-    gameState.timeLeft = 15;
-    gameState.startTime = Date.now();
-    gameState.reactionTimes = [];
-    
-    if (startScreen) startScreen.classList.add('hidden');
-    if (gameOverScreen) gameOverScreen.classList.add('hidden');
-    
-    updateStats();
-    moveTarget();
-    startTimer();
 }
 
 // Move target
@@ -334,6 +378,10 @@ function saveResult() {
 document.addEventListener('DOMContentLoaded', () => {
     debug('DOM loaded, setting up event listeners');
     
+    if (!checkElements()) {
+        debug('Some elements are missing, game may not work properly');
+    }
+    
     // Preload images
     preloadImages();
     
@@ -343,14 +391,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     if (startButton) {
         startButton.addEventListener('click', startGame);
+        debug('Start button event listener added');
     }
     
     if (restartButton) {
         restartButton.addEventListener('click', initGame);
+        debug('Restart button event listener added');
     }
     
     if (saveResultButton) {
         saveResultButton.addEventListener('click', saveResult);
+        debug('Save result button event listener added');
     }
     
     if (clearCacheButton) {
@@ -358,14 +409,17 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.clear();
             location.reload();
         });
+        debug('Clear cache button event listener added');
     }
     
     if (target) {
         target.addEventListener('click', handleTargetClick);
+        debug('Target click event listener added');
     }
     
     // Update leaderboard
     updateLeaderboard();
+    debug('Initial setup completed');
 });
 
 // Debug target element
