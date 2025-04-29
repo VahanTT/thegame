@@ -11,9 +11,10 @@ const saveResultButton = document.getElementById('saveResult');
 const clearCacheButton = document.getElementById('clearCache');
 const leaderboardBody = document.getElementById('leaderboardBody');
 const clicksLeftElement = document.getElementById('clicksLeft');
-const totalTimeElement = document.getElementById('totalTime');
-const avgTimeElement = document.getElementById('avgTime');
-const finalTimeElement = document.getElementById('finalTime');
+const timeLeftElement = document.getElementById('timeLeft');
+const clicksCountElement = document.getElementById('clicksCount');
+const bestScoreElement = document.getElementById('bestScore');
+const finalScoreElement = document.getElementById('finalScore');
 const gameOverMessage = document.getElementById('gameOverMessage');
 
 // Game state
@@ -126,6 +127,8 @@ function preloadImages() {
 
 // Initialize game
 function initGame() {
+    debug('Initializing game...');
+    
     gameState = {
         isActive: false,
         clicksCount: 0,
@@ -137,9 +140,9 @@ function initGame() {
     };
 
     updateStats();
-    target.style.display = 'none';
-    startScreen.classList.remove('hidden');
-    gameOverScreen.classList.add('hidden');
+    if (target) target.style.display = 'none';
+    if (startScreen) startScreen.classList.remove('hidden');
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
 
     if (gameState.timer) {
         clearInterval(gameState.timer);
@@ -161,14 +164,21 @@ function startFromRules() {
 
 // Start game
 function startGame() {
+    debug('Starting game...');
+    
+    if (!target || !gameContainer) {
+        debug('Required elements not found');
+        return;
+    }
+
     gameState.isActive = true;
     gameState.clicksCount = 0;
     gameState.timeLeft = 15;
     gameState.startTime = Date.now();
     gameState.reactionTimes = [];
     
-    startScreen.classList.add('hidden');
-    gameOverScreen.classList.add('hidden');
+    if (startScreen) startScreen.classList.add('hidden');
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
     
     updateStats();
     moveTarget();
@@ -177,11 +187,13 @@ function startGame() {
 
 // Move target
 function moveTarget() {
-    if (!gameState.isActive) return;
+    if (!gameState.isActive || !target || !gameContainer) return;
+
+    debug('Moving target...');
 
     // Get container dimensions
     const containerRect = gameContainer.getBoundingClientRect();
-    const targetSize = 100;
+    const targetSize = window.innerWidth <= 480 ? 50 : window.innerWidth <= 768 ? 60 : 80;
 
     // Calculate random position
     const maxX = containerRect.width - targetSize;
@@ -207,13 +219,15 @@ function moveTarget() {
 function handleTargetClick() {
     if (!gameState.isActive) return;
 
+    debug('Target clicked');
+
     // Calculate reaction time
     const reactionTime = Date.now() - gameState.startTime;
     gameState.reactionTimes.push(reactionTime);
     gameState.startTime = Date.now();
 
     // Hide target immediately
-    target.style.display = 'none';
+    if (target) target.style.display = 'none';
 
     // Update game state
     gameState.clicksCount++;
@@ -238,20 +252,35 @@ function startTimer() {
 
 // Update timer display
 function updateTimer() {
-    document.getElementById('timeLeft').textContent = gameState.timeLeft;
+    if (timeLeftElement) {
+        timeLeftElement.textContent = gameState.timeLeft;
+    }
 }
 
 // Update stats
 function updateStats() {
-    document.getElementById('clicksCount').textContent = gameState.clicksCount;
-    document.getElementById('bestScore').textContent = gameState.bestScore;
-    document.getElementById('finalScore').textContent = gameState.clicksCount;
+    if (clicksCountElement) clicksCountElement.textContent = gameState.clicksCount;
+    if (bestScoreElement) bestScoreElement.textContent = gameState.bestScore;
+    if (finalScoreElement) finalScoreElement.textContent = gameState.clicksCount;
 }
 
 // End game
 function endGame() {
-    clearInterval(gameState.timer);
+    debug('Ending game...');
+    
+    // Stop the game
     gameState.isActive = false;
+    
+    // Clear timer
+    if (gameState.timer) {
+        clearInterval(gameState.timer);
+        gameState.timer = null;
+    }
+    
+    // Hide target
+    if (target) {
+        target.style.display = 'none';
+    }
     
     // Calculate average reaction time
     const avgReactionTime = gameState.reactionTimes.length > 0 
@@ -259,8 +288,14 @@ function endGame() {
         : 0;
     
     // Update game over message
-    gameOverMessage.textContent = `Game Over! Average reaction time: ${avgReactionTime}ms`;
-    gameOverScreen.style.display = 'block';
+    if (gameOverMessage) {
+        gameOverMessage.textContent = `Game Over! Average reaction time: ${avgReactionTime}ms`;
+    }
+    
+    // Show game over screen
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('hidden');
+    }
     
     // Save game results
     saveGameResult(gameState.clicksCount, gameState.reactionTimes);
@@ -274,55 +309,67 @@ function endGame() {
 
 // Save result
 function saveResult() {
-    const playerName = document.getElementById('playerName').value.trim();
-    if (!playerName) return;
-
-    const avgReactionTime = gameState.reactionTimes.length > 0 
-        ? Math.round(gameState.reactionTimes.reduce((a, b) => a + b) / gameState.reactionTimes.length)
-        : 0;
-
-    const result = {
-        name: playerName,
-        score: gameState.clicksCount,
-        avgReactionTime: avgReactionTime,
-        date: new Date().toISOString()
-    };
-
-    let results = JSON.parse(localStorage.getItem('gameResults') || '[]');
-    results.push(result);
+    debug('Saving result...');
     
-    // Sort by score (descending) and then by reaction time (ascending)
-    results.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return a.avgReactionTime - b.avgReactionTime;
-    });
+    const playerName = document.getElementById('playerName');
+    if (!playerName) {
+        debug('Player name input not found');
+        return;
+    }
     
-    // Keep only top 10 results
-    results = results.slice(0, 10);
+    const name = playerName.value.trim();
+    if (!name) {
+        alert('Please enter your name');
+        return;
+    }
     
-    localStorage.setItem('gameResults', JSON.stringify(results));
-    updateLeaderboard();
+    // Save the result
+    saveGameResult(gameState.clicksCount, gameState.reactionTimes);
+    
+    // Reset the game
     initGame();
 }
 
 // Event listeners
-target.addEventListener('click', handleTargetClick);
-startGameButton.addEventListener('click', startFromRules);
-startButton.addEventListener('click', startGame);
-restartButton.addEventListener('click', initGame);
-saveResultButton.addEventListener('click', saveResult);
-clearCacheButton.addEventListener('click', () => {
-    localStorage.clear();
-    location.reload();
+document.addEventListener('DOMContentLoaded', () => {
+    debug('DOM loaded, setting up event listeners');
+    
+    // Preload images
+    preloadImages();
+    
+    // Initialize game
+    initGame();
+    
+    // Set up event listeners
+    if (startButton) {
+        startButton.addEventListener('click', startGame);
+    }
+    
+    if (restartButton) {
+        restartButton.addEventListener('click', initGame);
+    }
+    
+    if (saveResultButton) {
+        saveResultButton.addEventListener('click', saveResult);
+    }
+    
+    if (clearCacheButton) {
+        clearCacheButton.addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+    }
+    
+    if (target) {
+        target.addEventListener('click', handleTargetClick);
+    }
+    
+    // Update leaderboard
+    updateLeaderboard();
 });
 
 // Debug target element
 debug(`Target element: ${target ? 'found' : 'not found'}`);
 if (target) {
     debug(`Target styles: ${window.getComputedStyle(target).display}`);
-}
-
-// Preload images and initialize game
-preloadImages();
-initGame();
-updateLeaderboard(); 
+} 
