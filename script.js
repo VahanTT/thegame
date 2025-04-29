@@ -30,13 +30,13 @@ let gameState = {
 
 // Images
 const images = [
-    './images/original.png',
-    './images/telegram-peer-photo-size-2-6299579313137914-1-0-0.jpg',
-    './images/telegram-peer-photo-size-2-3758195624491173-1-0-0.jpg',
-    './images/telegram-peer-photo-size-2-376647638515298409-1-0-0.jpg',
-    './images/telegram-peer-photo-size-2-441875268184942645-1-0-0.jpg',
-    './images/telegram-peer-photo-size-2-422224306747058198-1-0-0.jpg',
-    './images/telegram-cloud-photo-size-2-315165533860374848-c.jpg'
+    'images/original.png',
+    'images/telegram-peer-photo-size-2-6299579313137914-1-0-0.jpg',
+    'images/telegram-peer-photo-size-2-3758195624491173-1-0-0.jpg',
+    'images/telegram-peer-photo-size-2-376647638515298409-1-0-0.jpg',
+    'images/telegram-peer-photo-size-2-441875268184942645-1-0-0.jpg',
+    'images/telegram-peer-photo-size-2-422224306747058198-1-0-0.jpg',
+    'images/telegram-cloud-photo-size-2-315165533860374848-c.jpg'
 ];
 
 // Debug function
