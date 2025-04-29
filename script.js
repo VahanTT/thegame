@@ -2,8 +2,10 @@
 const target = document.getElementById('target');
 const gameContainer = document.querySelector('.game-container');
 const startScreen = document.querySelector('.start-screen');
+const rulesScreen = document.querySelector('.rules-screen');
 const gameOverScreen = document.querySelector('.game-over');
 const startButton = document.getElementById('startButton');
+const startGameButton = document.getElementById('startGame');
 const restartButton = document.getElementById('restartButton');
 const saveResultButton = document.getElementById('saveResult');
 const clearCacheButton = document.getElementById('clearCache');
@@ -106,13 +108,20 @@ function initGame() {
     // Update UI
     updateStats();
     target.style.display = 'none';
-    startScreen.classList.remove('hidden');
+    rulesScreen.classList.remove('hidden');
+    startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
 
     // Clear timer if exists
     if (gameState.timer) {
         clearInterval(gameState.timer);
     }
+}
+
+// Start game from rules screen
+function startFromRules() {
+    rulesScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
 }
 
 // Start game
@@ -250,6 +259,7 @@ function updateLeaderboard() {
 
 // Event listeners
 target.addEventListener('click', handleTargetClick);
+startGameButton.addEventListener('click', startFromRules);
 startButton.addEventListener('click', startGame);
 restartButton.addEventListener('click', initGame);
 saveResultButton.addEventListener('click', saveResult);
