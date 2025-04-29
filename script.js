@@ -108,8 +108,7 @@ function initGame() {
     // Update UI
     updateStats();
     target.style.display = 'none';
-    rulesScreen.classList.remove('hidden');
-    startScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
     gameOverScreen.classList.add('hidden');
 
     // Clear timer if exists
