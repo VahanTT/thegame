@@ -7,6 +7,7 @@ const elements = {
     startButton: document.getElementById('startButton'),
     restartButton: document.getElementById('restartButton'),
     saveResultButton: document.getElementById('saveResult'),
+    refreshLeaderboardButton: document.getElementById('refreshLeaderboard'),
     timeLeftElement: document.getElementById('timeLeft'),
     scoreElement: document.getElementById('score'),
     bestScoreElement: document.getElementById('bestScore'),
@@ -24,7 +25,12 @@ const gameState = {
     timer: null,
     startTime: null,
     reactionTimes: [],
-    bestScore: 0
+    bestScore: 0,
+    targetSize: 80, // Initial target size
+    sizeDecreaseInterval: null, // Interval for size decrease
+    sizeDecreaseRate: 1.0, // Pixels to decrease per interval
+    minSize: 20, // Minimum target size
+    currentImageIndex: 0 // Track current image index
 };
 
 // Images
@@ -103,12 +109,21 @@ function initGame() {
     gameState.score = 0;
     gameState.timeLeft = 15;
     gameState.reactionTimes = [];
+    gameState.targetSize = 80;
     
-    // Clear timer if exists
+    // Clear intervals
     if (gameState.timer) {
         clearInterval(gameState.timer);
         gameState.timer = null;
     }
+    if (gameState.sizeDecreaseInterval) {
+        clearInterval(gameState.sizeDecreaseInterval);
+        gameState.sizeDecreaseInterval = null;
+    }
+    
+    // Reset target size
+    elements.target.style.width = `${gameState.targetSize}px`;
+    elements.target.style.height = `${gameState.targetSize}px`;
     
     // Update UI
     updateStats();
@@ -149,18 +164,48 @@ function moveTarget() {
     if (!gameState.isActive) return;
     
     const gameArea = elements.gameArea.getBoundingClientRect();
-    const targetSize = elements.target.offsetWidth;
+    gameState.targetSize = 80; // Reset target size
     
     // Calculate random position
-    const maxX = gameArea.width - targetSize;
-    const maxY = gameArea.height - targetSize;
+    const maxX = gameArea.width - gameState.targetSize;
+    const maxY = gameArea.height - gameState.targetSize;
     const randomX = Math.floor(Math.random() * maxX);
     const randomY = Math.floor(Math.random() * maxY);
     
-    // Update target position
+    // Update target position and size
     elements.target.style.left = `${randomX}px`;
     elements.target.style.top = `${randomY}px`;
+    elements.target.style.width = `${gameState.targetSize}px`;
+    elements.target.style.height = `${gameState.targetSize}px`;
+    
+    // Set background image
+    elements.target.style.backgroundImage = `url(${images[gameState.currentImageIndex]})`;
+    elements.target.style.backgroundSize = 'cover';
+    elements.target.style.backgroundPosition = 'center';
     elements.target.style.display = 'block';
+    
+    // Update image index for next target
+    gameState.currentImageIndex = (gameState.currentImageIndex + 1) % images.length;
+    
+    // Start decreasing size
+    if (gameState.sizeDecreaseInterval) {
+        clearInterval(gameState.sizeDecreaseInterval);
+    }
+    
+    gameState.sizeDecreaseInterval = setInterval(() => {
+        if (gameState.targetSize > gameState.minSize) {
+            gameState.targetSize -= gameState.sizeDecreaseRate;
+            elements.target.style.width = `${gameState.targetSize}px`;
+            elements.target.style.height = `${gameState.targetSize}px`;
+        } else {
+            clearInterval(gameState.sizeDecreaseInterval);
+            // If target gets too small, move to next target
+            if (gameState.isActive) {
+                elements.target.style.display = 'none';
+                setTimeout(moveTarget, 100);
+            }
+        }
+    }, 50); // Update size every 50ms
     
     // Record start time for reaction time calculation
     gameState.startTime = Date.now();
@@ -174,8 +219,15 @@ function handleTargetClick() {
     const reactionTime = Date.now() - gameState.startTime;
     gameState.reactionTimes.push(reactionTime);
     
+    // Clear size decrease interval
+    if (gameState.sizeDecreaseInterval) {
+        clearInterval(gameState.sizeDecreaseInterval);
+    }
+    
     // Update score
     gameState.score++;
+    
+    // Update stats
     updateStats();
     
     // Hide target
@@ -216,6 +268,9 @@ function endGame() {
     
     gameState.isActive = false;
     clearInterval(gameState.timer);
+    if (gameState.sizeDecreaseInterval) {
+        clearInterval(gameState.sizeDecreaseInterval);
+    }
     elements.target.style.display = 'none';
     
     // Calculate average reaction time
@@ -294,7 +349,7 @@ function updateLeaderboard() {
             <td>${index + 1}</td>
             <td>${result.name}</td>
             <td>${result.score}</td>
-            <td>${result.time}</td>
+            <td>${result.time}ms</td>
         `;
         elements.leaderboardBody.appendChild(row);
     });
@@ -311,10 +366,14 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.startButton.addEventListener('click', startGame);
     elements.restartButton.addEventListener('click', initGame);
     elements.saveResultButton.addEventListener('click', saveResult);
+    elements.refreshLeaderboardButton.addEventListener('click', updateLeaderboard);
     elements.target.addEventListener('click', handleTargetClick);
     
     // Update leaderboard
     updateLeaderboard();
+    
+    // Update leaderboard every 30 seconds
+    setInterval(updateLeaderboard, 30000);
 });
 
 // Debug target element
