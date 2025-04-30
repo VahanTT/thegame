@@ -7,47 +7,60 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="game-wrapper">
+    <div class="game-container">
+        <!-- Game Stats -->
         <div class="stats">
-            <h3>Game Stats</h3>
-            <p>Time left: <span id="timeLeft">15</span>s</p>
-            <p>Images clicked: <span id="clicksCount">0</span></p>
-            <p>Best score: <span id="bestScore">0</span></p>
-            <button id="clearCache">Clear Cache</button>
-        </div>
-        
-        <div class="game-container">
-            <div id="target"></div>
-            <div class="start-screen">
-                <h2>Find and Click Game</h2>
-                <div class="rules">
-                    <p>1. Find and click on the circular images as fast as you can</p>
-                    <p>2. Each click counts as a point</p>
-                    <p>3. You have 15 seconds to get the highest score</p>
-                    <p>4. Try to beat your best score!</p>
-                </div>
-                <button id="startButton">Start Game</button>
+            <div class="stat">
+                <span class="label">Time:</span>
+                <span id="timeLeft">15</span>s
             </div>
-            <div class="game-over hidden">
-                <h2>Game Over!</h2>
-                <p>You clicked <span id="finalScore">0</span> images</p>
-                <div class="name-input">
-                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-                    <button id="saveResult">Save Result</button>
-                </div>
-                <button id="restartButton">Play Again</button>
+            <div class="stat">
+                <span class="label">Score:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="stat">
+                <span class="label">Best:</span>
+                <span id="bestScore">0</span>
             </div>
         </div>
 
+        <!-- Game Area -->
+        <div class="game-area">
+            <div id="target" class="target"></div>
+            
+            <!-- Start Screen -->
+            <div id="startScreen" class="screen">
+                <h1>Find and Click</h1>
+                <div class="rules">
+                    <p>Click on the circles as fast as you can!</p>
+                    <p>You have 15 seconds to get the highest score.</p>
+                </div>
+                <button id="startButton" class="button">Start Game</button>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="gameOverScreen" class="screen hidden">
+                <h2>Game Over!</h2>
+                <p>Your score: <span id="finalScore">0</span></p>
+                <p>Average reaction time: <span id="avgReactionTime">0</span>ms</p>
+                <div class="name-input">
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                    <button id="saveResult" class="button">Save Score</button>
+                </div>
+                <button id="restartButton" class="button">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
         <div class="leaderboard">
-            <h3>Leaderboard</h3>
-            <table class="leaderboard-table">
+            <h3>Top Players</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Name</th>
                         <th>Score</th>
-                        <th>Avg Reaction Time</th>
+                        <th>Time (ms)</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
